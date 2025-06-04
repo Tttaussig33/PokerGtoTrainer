@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poker GTO Trainer</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .main-container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      margin: 20px;
+      padding: 30px;
+      min-height: calc(100vh - 40px);
+    }
+
+    .stats-card {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .stats-card h6 {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .stats-card h3 {
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .poker-table {
+      background: linear-gradient(135deg, #1a4d3a, #2d6a4f);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+      min-height: 400px;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto 30px auto;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .street-indicator {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      background: rgba(255,255,255,0.2);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .opponent-area {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .pot-area {
+      background: rgba(255,255,255,0.1);
+      padding: 20px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      margin: 20px 0;
+    }
+
+    .hero-area {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: white;
+      color: black;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 0 5px;
+      display: inline-block;
+      font-weight: bold;
+      font-size: 16px;
+      min-width: 45px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .card.hidden {
+      background: #8B4513;
+      color: white;
+    }
+
+    .action-buttons {
+      margin: 30px 0;
+      text-align: center;
+    }
+
+    .action-buttons .btn {
+      margin: 0 10px;
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 25px;
+      min-width: 120px;
+    }
+
+    .feedback-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 25px;
+      margin: 20px 0;
+      min-height: 150px;
+    }
+
+    .side-panel .card {
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .progress {
+      height: 25px;
+      border-radius: 15px;
+    }
+
+    .badge {
+      font-size: 0.9rem;
+      padding: 8px 12px;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+  .opponent-stack {
+    position: absolute;
+    top: 50px;
+    right: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px; /* Optional */
+    height: 30px;  /* Optional */
+  }
+
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <h1 class="text-center mb-4">🃏 Poker GTO Trainer</h1>
+    
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="mainTabs">
+      <li class="nav-item">
+        <a class="nav-link active" id="training-tab" data-bs-toggle="tab" href="#game-panel">Training Session</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="history-tab" data-bs-toggle="tab" href="#history-panel">Hand History</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="analytics-tab" data-bs-toggle="tab" href="#analytics-panel">Analytics</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="settings-tab" data-bs-toggle="tab" href="#settings-panel">Settings</a>
+      </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- Game Panel -->
+      <div class="tab-pane fade show active" id="game-panel">
+        <div class="row">
+          <div class="col-lg-8">
+            <!-- Game Stats -->
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <div class="stats-card">
+                  <h6>Session Accuracy</h6>
+                  <h3 id="session-accuracy">0%</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stats-card">
+                  <h6>Current Streak</h6>
+                  <h3 id="current-streak">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stats-card">
+                  <h6>Hands Played</h6>
+                  <h3 id="hands-played">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stats-card">
+                  <h6>EV Saved</h6>
+                  <h3 id="ev-saved">$0</h3>
+                </div>
+              </div>
+            </div>
+
+            <!-- Poker Table -->
+            <div class="poker-table fade-in" id="table-container">
+              <div class="street-indicator" id="street-indicator">Pre-Flop</div>
+              
+              <!-- Opponent Area -->
+              <div class="opponent-area">
+                <small>Opponent</small>
+                <div class="mt-2">
+                  <div class="card hidden" id="opp-card-1">?</div>
+                  <div class="card hidden" id="opp-card-2">?</div>
+                </div>
+                <div class="opponent-stack">
+                  <span class="badge bg-info">$<span id="opponent-stack">100</span></span>
+                </div>
+              </div>
+
+              <!-- Pot and Community Cards -->
+              <div class="pot-area">
+                <h5>Pot: $<span id="pot-size">0</span></h5>
+                <div class="mt-3">
+                  <div class="card hidden" id="community-1">?</div>
+                  <div class="card hidden" id="community-2">?</div>
+                  <div class="card hidden" id="community-3">?</div>
+                  <div class="card hidden" id="community-4">?</div>
+                  <div class="card hidden" id="community-5">?</div>
+                </div>
+              </div>
+
+              <!-- Hero Area -->
+              <div class="hero-area">
+                <small>Your Hand</small>
+                <div class="mt-2">
+                  <div class="card" id="hero-card-1">?</div>
+                  <div class="card" id="hero-card-2">?</div>
+                </div>
+                <div class="mt-2">
+                  <span class="badge bg-success">$<span id="hero-stack">100</span></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+              <div id="action-buttons">
+                <button class="btn btn-danger" id="fold-btn">Fold</button>
+                <button class="btn btn-warning" id="call-btn">Call $<span id="call-amount">0</span></button>
+                <button class="btn btn-success" id="raise-btn">Raise</button>
+              </div>
+
+              <!-- Raise Controls -->
+              <div id="raise-controls" style="display: none;" class="mt-4">
+                <div class="bg-light p-4 rounded">
+                  <label for="raise-slider" class="form-label">Raise Size: $<span id="raise-display">20</span></label>
+                  <input type="range" class="form-range" id="raise-slider" min="10" max="100" value="20">
+                  <div class="mt-3">
+                    <button class="btn btn-primary me-2" id="confirm-raise">Confirm Raise</button>
+                    <button class="btn btn-secondary" id="cancel-raise">Cancel</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feedback Area -->
+            <div class="feedback-card">
+              <h6><i class="fas fa-chart-line me-2"></i>Hand Analysis</h6>
+              <div id="feedback-content">
+                <div class="text-center text-muted py-4">
+                  <i class="fas fa-play-circle fa-3x mb-3"></i>
+                  <p class="mb-0">Make your decision to see detailed GTO analysis and feedback</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Next Hand Button -->
+            <div class="text-center">
+              <button id="next-hand-btn" class="btn btn-primary btn-lg px-5" style="display: none;">
+                <i class="fas fa-arrow-right me-2"></i>Next Hand
+              </button>
+            </div>
+          </div>
+
+          <!-- Side Panel -->
+          <div class="col-lg-4 side-panel">
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-brain me-2"></i>GTO Analysis</h6>
+              </div>
+              <div class="card-body" id="gto-analysis" style="min-height: 150px;">
+                <p class="text-muted mb-0">Make your move to see GTO analysis</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Hand Equity</h6>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <small class="text-muted">Your Equity</small>
+                  <div class="progress mb-1">
+                    <div class="progress-bar bg-success" id="hero-equity" style="width: 50%">50%</div>
+                  </div>
+                </div>
+                <div>
+                  <small class="text-muted">Opponent Equity</small>
+                  <div class="progress">
+                    <div class="progress-bar bg-danger" id="opponent-equity" style="width: 50%">50%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hand History Panel -->
+      <div class="tab-pane fade" id="history-panel">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Hand History</h5>
+          </div>
+          <div class="card-body">
+            <div id="hand-history-container">
+              <p class="text-muted">No hands played yet. Start a training session to see your hand history.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Panel -->
+      <div class="tab-pane fade" id="analytics-panel">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Performance Analytics</h5>
+          </div>
+          <div class="card-body">
+            <div class="row" id="detailed-stats">
+              <div class="col-md-12">
+                <p class="text-muted">Play some hands to see detailed analytics.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Panel -->
+      <div class="tab-pane fade" id="settings-panel">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Settings</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <button class="btn btn-warning" id="reset-stats">Reset All Statistics</button>
+            </div>
+            <div class="text-muted">
+              <p>More settings coming soon...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Poker Game State Management
+    class PokerGTOTrainer {
+        constructor() {
+      this.gameState = {
+        street: 'preflop',
+        pot: 3,
+        heroStack: 97,
+        opponentStack: 98,
+        toCall: 2,
+        heroCards: [],
+        opponentCards: [],
+        communityCards: [],
+        currentHand: null,
+        handHistory: this.loadFromStorage('pokerHandHistory', []),
+        stats: this.loadFromStorage('pokerStats', {}),
+        currentAction: null
+      };
+
+      this.initializeStats();
+      this.setupEventListeners();
+      this.newHand();
+      this.updateDisplays();
+    }
+
+      loadFromStorage(key, defaultValue) {
+  try {
+    const stored = JSON.parse(localStorage.getItem(key));
+    return stored ?? defaultValue;
+  } catch (e) {
+    return defaultValue;
+  }
+}
+
+
+      initializeStats() {
+        const defaultStats = {
+          totalHands: 0,
+          correctDecisions: 0,
+          incorrectDecisions: 0,
+          streakCurrent: 0,
+          streakBest: 0,
+          evSaved: 0,
+          mistakesByStreet: { preflop: 0, flop: 0, turn: 0, river: 0 },
+          accuracyByPosition: {},
+          sessionStats: []
+        };
+        
+        this.gameState.stats = { ...defaultStats, ...this.gameState.stats };
+      }
+
+      setupEventListeners() {
+        const foldBtn = document.getElementById('fold-btn');
+        const callBtn = document.getElementById('call-btn');
+        const raiseBtn = document.getElementById('raise-btn');
+        const confirmRaiseBtn = document.getElementById('confirm-raise');
+        const cancelRaiseBtn = document.getElementById('cancel-raise');
+        const nextHandBtn = document.getElementById('next-hand-btn');
+        const raiseSlider = document.getElementById('raise-slider');
+        const resetStatsBtn = document.getElementById('reset-stats');
+
+        if (foldBtn) foldBtn.addEventListener('click', () => this.makeAction('fold'));
+        if (callBtn) callBtn.addEventListener('click', () => this.makeAction('call'));
+        if (raiseBtn) raiseBtn.addEventListener('click', () => this.showRaiseControls());
+        if (confirmRaiseBtn) confirmRaiseBtn.addEventListener('click', () => this.confirmRaise());
+        if (cancelRaiseBtn) cancelRaiseBtn.addEventListener('click', () => this.hideRaiseControls());
+        if (nextHandBtn) nextHandBtn.addEventListener('click', () => this.newHand());
+        
+        if (raiseSlider) {
+          raiseSlider.addEventListener('input', (e) => {
+            const displayElement = document.getElementById('raise-display');
+            if (displayElement) {
+              displayElement.textContent = e.target.value;
+            }
+          });
+        }
+
+        if (resetStatsBtn) {
+          resetStatsBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset all statistics?')) {
+              this.resetStats();
+            }
+          });
+        }
+      }
+
+      generateDeck() {
+        const suits = ['♠', '♥', '♦', '♣'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
+        const deck = [];
+        
+        for (const suit of suits) {
+          for (const rank of ranks) {
+            deck.push(rank + suit);
+          }
+        }
+        
+        return this.shuffle(deck);
+      }
+
+      shuffle(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      }
+
+      newHand() {
+        const deck = this.generateDeck();
+        
+        this.gameState.heroCards = [deck.pop(), deck.pop()];
+        this.gameState.opponentCards = [deck.pop(), deck.pop()];
+        this.gameState.communityCards = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+        
+        this.gameState.street = 'preflop';
+        this.gameState.pot = 3;
+        this.gameState.heroStack = 97;
+        this.gameState.opponentStack = 98;
+        this.gameState.toCall = 2;
+        this.gameState.currentHand = {
+          heroCards: [...this.gameState.heroCards],
+          opponentCards: [...this.gameState.opponentCards],
+          communityCards: [...this.gameState.communityCards],
+          actions: [],
+          startTime: Date.now()
+        };
+
+        this.updateTable();
+        this.hideRaiseControls();
+        
+        const feedbackContent = document.getElementById('feedback-content');
+        const nextHandBtn = document.getElementById('next-hand-btn');
+        const actionButtons = document.getElementById('action-buttons');
+        
+        if (feedbackContent) {
+          feedbackContent.innerHTML = `
+            <div class="text-center text-muted py-4">
+              <i class="fas fa-play-circle fa-3x mb-3"></i>
+              <p class="mb-0">Make your decision to see detailed GTO analysis and feedback</p>
+            </div>
+          `;
+        }
+        if (nextHandBtn) nextHandBtn.style.display = 'none';
+        if (actionButtons) actionButtons.style.display = 'block';
+      }
+
+      updateTable() {
+        const heroCard1 = document.getElementById('hero-card-1');
+        const heroCard2 = document.getElementById('hero-card-2');
+        if (heroCard1) heroCard1.textContent = this.gameState.heroCards[0];
+        if (heroCard2) heroCard2.textContent = this.gameState.heroCards[1];
+        
+        const communityElements = [
+          'community-1', 'community-2', 'community-3', 'community-4', 'community-5'
+        ];
+        
+        let visibleCards = this.getVisibleCommunityCards();
+
+        communityElements.forEach((id, index) => {
+          const element = document.getElementById(id);
+          if (element) {
+            if (index < visibleCards) {
+              element.textContent = this.gameState.communityCards[index];
+              element.classList.remove('hidden');
+            } else {
+              element.textContent = '?';
+              element.classList.add('hidden');
+            }
+          }
+        });
+
+        const streetIndicator = document.getElementById('street-indicator');
+        const potSize = document.getElementById('pot-size');
+        const heroStack = document.getElementById('hero-stack');
+        const opponentStack = document.getElementById('opponent-stack');
+        const callAmount = document.getElementById('call-amount');
+
+        if (streetIndicator) streetIndicator.textContent = this.capitalizeFirst(this.gameState.street);
+        if (potSize) potSize.textContent = this.gameState.pot;
+        if (heroStack) heroStack.textContent = this.gameState.heroStack;
+        if (opponentStack) opponentStack.textContent = this.gameState.opponentStack;
+        if (callAmount) callAmount.textContent = this.gameState.toCall;
+        
+        this.updateEquityDisplay();
+      }
+
+      updateEquityDisplay() {
+        const heroEquity = this.estimateEquity(this.gameState.heroCards, this.gameState.communityCards);
+        const oppEquity = 100 - heroEquity;
+        
+        const heroEquityElement = document.getElementById('hero-equity');
+        const opponentEquityElement = document.getElementById('opponent-equity');
+        
+        if (heroEquityElement) {
+          heroEquityElement.style.width = heroEquity + '%';
+          heroEquityElement.textContent = Math.round(heroEquity) + '%';
+        }
+        
+        if (opponentEquityElement) {
+          opponentEquityElement.style.width = oppEquity + '%';
+          opponentEquityElement.textContent = Math.round(oppEquity) + '%';
+        }
+      }
+
+      estimateEquity(heroCards, communityCards) {
+        const handStrength = this.evaluateHandStrength(heroCards, communityCards.slice(0, this.getVisibleCommunityCards()));
+        return Math.min(90, Math.max(10, 30 + handStrength * 10));
+      }
+
+      getVisibleCommunityCards() {
+        switch (this.gameState.street) {
+          case 'preflop': return 0;
+          case 'flop': return 3;
+          case 'turn': return 4;
+          case 'river': return 5;
+          default: return 0;
+        }
+      }
+
+      evaluateHandStrength(heroCards, communityCards) {
+        const cards = [...heroCards, ...communityCards];
+        const ranks = cards.map(card => card[0]);
+        
+        const rankCounts = {};
+        ranks.forEach(rank => rankCounts[rank] = (rankCounts[rank] || 0) + 1);
+        
+        const pairs = Object.values(rankCounts).filter(count => count >= 2).length;
+        const highCard = this.getHighCardValue(ranks);
+        
+        if (pairs > 0) return 4 + pairs;
+        if (highCard >= 11) return 3;
+        if (highCard >= 9) return 2;
+        return 1;
+      }
+
+      getHighCardValue(ranks) {
+        const values = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
+        return Math.max(...ranks.map(rank => values[rank] || 0));
+      }
+
+      normalizeHand(cards) {
+        const rankOrder = '23456789TJQKA';
+        const [card1, card2] = cards;
+        const rank1 = card1[0];
+        const rank2 = card2[0];
+        const suit1 = card1[1];
+        const suit2 = card2[1];
+
+        if (rank1 === rank2) {
+          return rank1 + rank2; // e.g. 'QQ'
+        }
+
+        const ranks = [rank1, rank2].sort((a, b) => rankOrder.indexOf(b) - rankOrder.indexOf(a)).join('');
+        const suitedness = suit1 === suit2 ? 's' : 'o'; // 's' for suited, 'o' for offsuit
+
+        return ranks + suitedness;
+      }
+
+
+
+      makeAction(action, amount = 0) {
+        this.gameState.currentAction = { action, amount, street: this.gameState.street };
+        this.gameState.currentHand.actions.push(this.gameState.currentAction);
+        
+        const gtoRecommendation = this.getGTORecommendation();
+        const isCorrect = this.isActionCorrect(action, amount, gtoRecommendation);
+        
+        this.processAction(action, amount);
+        this.showFeedback(action, amount, gtoRecommendation, isCorrect);
+        this.updateStats(isCorrect);
+        
+        const actionButtons = document.getElementById('action-buttons');
+        const nextHandBtn = document.getElementById('next-hand-btn');
+        
+        if (actionButtons) actionButtons.style.display = 'none';
+        if (nextHandBtn) nextHandBtn.style.display = 'block';
+        
+        this.saveHandToHistory(isCorrect);
+      }
+
+
+      getGTORecommendation() {
+        const heroHand = this.normalizeHand(this.gameState.heroCards);
+
+        const preflopResponses = {
+          // Pocket Pairs
+          "AA": { raise: 100, call: 0, fold: 0 },
+          "KK": { raise: 100, call: 0, fold: 0 },
+          "QQ": { raise: 100, call: 0, fold: 0 },
+          "JJ": { raise: 90, call: 10, fold: 0 },
+          "TT": { raise: 85, call: 15, fold: 0 },
+          "99": { raise: 70, call: 30, fold: 0 },
+          "88": { raise: 60, call: 40, fold: 0 },
+          "77": { raise: 50, call: 50, fold: 0 },
+          "66": { raise: 40, call: 60, fold: 0 },
+          "55": { raise: 30, call: 60, fold: 10 },
+          "44": { raise: 25, call: 60, fold: 15 },
+          "33": { raise: 20, call: 55, fold: 25 },
+          "22": { raise: 15, call: 50, fold: 35 },
+
+          // Suited Broadways
+          "AKs": { raise: 100, call: 0, fold: 0 },
+          "AQs": { raise: 90, call: 10, fold: 0 },
+          "AJs": { raise: 85, call: 15, fold: 0 },
+          "ATs": { raise: 80, call: 20, fold: 0 },
+          "KQs": { raise: 75, call: 25, fold: 0 },
+          "KJs": { raise: 70, call: 30, fold: 0 },
+          "QJs": { raise: 60, call: 35, fold: 5 },
+          "JTs": { raise: 55, call: 40, fold: 5 },
+
+          // Offsuit Broadways
+          "AKo": { raise: 100, call: 0, fold: 0 },
+          "AQo": { raise: 70, call: 20, fold: 10 },
+          "AJo": { raise: 60, call: 25, fold: 15 },
+          "KQo": { raise: 50, call: 25, fold: 25 },
+
+          // Suited Aces (including weaker ones)
+          "A9s": { raise: 65, call: 25, fold: 10 },
+          "A8s": { raise: 60, call: 25, fold: 15 },
+          "A7s": { raise: 55, call: 25, fold: 20 },
+          "A6s": { raise: 50, call: 25, fold: 25 },
+          "A5s": { raise: 70, call: 20, fold: 10 }, // Wheel potential
+          "A4s": { raise: 65, call: 25, fold: 10 },
+          "A3s": { raise: 60, call: 25, fold: 15 },
+          "A2s": { raise: 60, call: 25, fold: 15 },
+
+          // Strong Suited Connectors
+          "KTs": { raise: 50, call: 35, fold: 15 },
+          "QTs": { raise: 45, call: 35, fold: 20 },
+          "J9s": { raise: 40, call: 40, fold: 20 },
+          "T9s": { raise: 40, call: 40, fold: 20 },
+          "98s": { raise: 35, call: 45, fold: 20 },
+          "87s": { raise: 30, call: 50, fold: 20 },
+          "76s": { raise: 25, call: 55, fold: 20 },
+          "65s": { raise: 20, call: 50, fold: 30 },
+          "54s": { raise: 15, call: 45, fold: 40 },
+
+          // Other Notable Hands
+          "K9s": { raise: 25, call: 45, fold: 30 },
+          "Q9s": { raise: 20, call: 40, fold: 40 },
+          "J8s": { raise: 15, call: 45, fold: 40 },
+          "T8s": { raise: 10, call: 40, fold: 50 }
+        };
+
+
+
+
+        const action = preflopResponses[heroHand];
+
+          // Fallback strategy if the hand isn't explicitly in the lookup table
+          if (!action) {
+            const handStrength = this.evaluateHandStrength(this.gameState.heroCards, this.gameState.communityCards.slice(0, this.getVisibleCommunityCards()));
+
+            if (handStrength >= 5) {
+              return { primary: 'raise', frequency: { fold: 5, call: 25, raise: 70 }, reasoning: 'Strong hand, bet for value' };
+            } else if (handStrength >= 3) {
+              return { primary: 'call', frequency: { fold: 30, call: 50, raise: 20 }, reasoning: 'Decent hand, call to see more cards' };
+            } else {
+              return { primary: 'fold', frequency: { fold: 70, call: 20, raise: 10 }, reasoning: 'Weak hand, fold to pressure' };
+            }
+          }
+
+          if (action === 'raise') {
+            return {
+              primary: 'raise',
+              frequency: { fold: 0, call: 10, raise: 90 },
+              reasoning: 'Strong hand, raise for value'
+            };
+          } else if (action === 'call') {
+            return {
+              primary: 'call',
+              frequency: { fold: 20, call: 60, raise: 20 },
+              reasoning: 'Playable hand, call to see the flop'
+            };
+          } else {
+            return {
+              primary: 'fold',
+              frequency: { fold: 80, call: 15, raise: 5 },
+              reasoning: 'Weak hand, fold preflop'
+            };
+          }
+
+      }
+
+
+getPreflopHandKey(cards) {
+  const [c1, c2] = cards;
+  const r1 = c1[0];
+  const r2 = c2[0];
+  const s1 = c1.slice(1);
+  const s2 = c2.slice(1);
+
+  const suited = s1 === s2;
+  let key;
+
+  if (r1 === r2) {
+    key = r1 + r2; // e.g. 'QQ'
+  } else {
+    const [high, low] = [r1, r2].sort((a, b) => '23456789TJQKA'.indexOf(b) - '23456789TJQKA'.indexOf(a));
+    key = high + low + (suited ? 's' : 'o');
+  }
+
+  return key;
+}
+
+
+
+      isActionCorrect(action, amount, gtoRecommendation) {
+        if (action === gtoRecommendation.primary) return true;
+        const actionFreq = gtoRecommendation.frequency[action] || 0;
+        return actionFreq >= 25;
+      }
+
+      processAction(action, amount) {
+        switch (action) {
+          case 'fold':
+            break;
+          case 'call':
+            this.gameState.heroStack -= this.gameState.toCall;
+            this.gameState.pot += this.gameState.toCall;
+            this.advanceStreet();
+            break;
+          case 'raise':
+            this.gameState.heroStack -= amount;
+            this.gameState.pot += amount;
+            this.gameState.toCall = amount - this.gameState.toCall;
+            this.advanceStreet();
+            break;
+        }
+      }
+      
+      checkGTODatabase() {
+        const street = this.gameState.street;
+        if (street !== 'preflop') return null;
+
+        const handCode = this.normalizeHand(this.gameState.heroCards[0], this.gameState.heroCards[1]);
+
+        for (const category in this.gtoDatabase.preflop) {
+          const config = this.gtoDatabase.preflop[category];
+          if (config.hands.includes(handCode)) {
+            return {
+              primary: config.action,
+              frequency: {
+                fold: Math.round(config.frequency.fold),
+                call: Math.round(config.frequency.call),
+                raise: Math.round(config.frequency.raise)
+              },
+              reasoning: config.reasoning,
+              source: 'database'
+            };
+          }
+        }
+
+        return null;
+      }
+
+
+      advanceStreet() {
+        const streets = ['preflop', 'flop', 'turn', 'river'];
+        const currentIndex = streets.indexOf(this.gameState.street);
+        
+        if (currentIndex < streets.length - 1) {
+          this.gameState.street = streets[currentIndex + 1];
+          this.gameState.toCall = 0;
+          this.updateTable();
+        }
+      }
+
+      showFeedback(action, amount, gtoRecommendation, isCorrect) {
+        const feedbackElement = document.getElementById('feedback-content');
+        if (!feedbackElement) return;
+        
+        const actionText = action === 'raise' ? `${action} $${amount}` : action;
+        
+        let feedbackHTML = `
+          <div class="alert ${isCorrect ? 'alert-success' : 'alert-danger'} mb-0">
+            <div class="d-flex align-items-center mb-3">
+              <h5 class="mb-0">
+                ${isCorrect ? '✅ Correct Decision!' : '❌ Suboptimal Play'}
+              </h5>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <p class="mb-2"><strong>Your Action:</strong> ${this.capitalizeFirst(actionText)}</p>
+                <p class="mb-2"><strong>GTO Recommendation:</strong> ${this.capitalizeFirst(gtoRecommendation.primary)}</p>
+                <p class="mb-0"><strong>Reasoning:</strong> ${gtoRecommendation.reasoning}</p>
+              </div>
+              <div class="col-md-6">
+                <h6 class="mb-2">GTO Frequencies:</h6>
+                ${Object.entries(gtoRecommendation.frequency).map(([act, freq]) => 
+                  `<div class="d-flex justify-content-between mb-1">
+                    <span>${this.capitalizeFirst(act)}:</span>
+                    <span class="fw-bold">${freq}%</span>
+                   </div>`
+                ).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+        
+        feedbackElement.innerHTML = feedbackHTML;
+        
+        const gtoAnalysis = document.getElementById('gto-analysis');
+        if (gtoAnalysis) {
+          gtoAnalysis.innerHTML = `
+            <div class="mb-2">
+              <strong>Recommended Action:</strong><br>
+              <span class="text-primary">${this.capitalizeFirst(gtoRecommendation.primary)}</span>
+            </div>
+            <div class="mb-2">
+              <strong>Hand Strength:</strong><br>
+              <span class="text-info">${this.getHandStrengthDescription()}</span>
+            </div>
+            <div>
+              <strong>Position:</strong><br>
+              <span class="text-success">Button (Favorable)</span>
+            </div>
+          `;
+        }
+      }
+
+      getHandStrengthDescription() {
+        const strength = this.evaluateHandStrength(this.gameState.heroCards, 
+          this.gameState.communityCards.slice(0, this.getVisibleCommunityCards()));
+        
+        if (strength >= 5) return 'Strong';
+        if (strength >= 3) return 'Medium';
+        if (strength >= 2) return 'Weak';
+        return 'Very Weak';
+      }
+
+      updateStats(isCorrect) {
+        this.gameState.stats.totalHands++;
+        
+        if (isCorrect) {
+          this.gameState.stats.correctDecisions++;
+          this.gameState.stats.streakCurrent++;
+          this.gameState.stats.streakBest = Math.max(this.gameState.stats.streakBest, this.gameState.stats.streakCurrent);
+          this.gameState.stats.evSaved += this.calculateEVSaved();
+        } else {
+          this.gameState.stats.incorrectDecisions++;
+          this.gameState.stats.streakCurrent = 0;
+          this.gameState.stats.mistakesByStreet[this.gameState.street]++;
+        }
+        
+        this.saveStats();
+        this.updateDisplays();
+      }
+
+      calculateEVSaved() {
+        return Math.random() * 10 + 5;
+      }
+
+      saveStats() {
+        localStorage.setItem('pokerStats', JSON.stringify(this.gameState.stats));
+      }
+
+      saveHandToHistory(isCorrect) {
+  const handRecord = {
+    id: Date.now(),
+    heroCards: [...this.gameState.currentHand.heroCards],
+    communityCards: [...this.gameState.currentHand.communityCards],
+    actions: [...this.gameState.currentHand.actions],
+    isCorrect,
+    timestamp: Date.now(),
+    street: this.gameState.street,
+    pot: this.gameState.pot
+  };
+
+  this.gameState.handHistory.unshift(handRecord);
+
+  if (this.gameState.handHistory.length > 100) {
+    this.gameState.handHistory = this.gameState.handHistory.slice(0, 100);
+  }
+
+  localStorage.setItem('pokerHandHistory', JSON.stringify(this.gameState.handHistory));
+
+  // ✅ THIS WAS MISSING:
+  this.updateHandHistoryDisplay();
+}
+
+
+      updateDisplays() {
+  const accuracy = this.gameState.stats.totalHands > 0 ? 
+    Math.round((this.gameState.stats.correctDecisions / this.gameState.stats.totalHands) * 100) : 0;
+  
+  const sessionAccuracy = document.getElementById('session-accuracy');
+  const currentStreak = document.getElementById('current-streak');
+  const handsPlayed = document.getElementById('hands-played');
+  const evSaved = document.getElementById('ev-saved');
+  
+  if (sessionAccuracy) sessionAccuracy.textContent = accuracy + '%';
+  if (currentStreak) currentStreak.textContent = this.gameState.stats.streakCurrent;
+  if (handsPlayed) handsPlayed.textContent = this.gameState.stats.totalHands;
+  if (evSaved) evSaved.textContent = '$' + Math.round(this.gameState.stats.evSaved);
+}
+
+updateHandHistoryDisplay() {
+  const container = document.getElementById('hand-history-container');
+  if (!container) return;
+
+  if (this.gameState.handHistory.length === 0) {
+    container.innerHTML = `<p class="text-muted">No hands played yet. Start a training session to see your hand history.</p>`;
+    return;
+  }
+
+  container.innerHTML = ''; // Clear old content
+
+  this.gameState.handHistory.forEach((hand, index) => {
+    const div = document.createElement('div');
+    div.className = 'mb-3 p-3 border rounded';
+
+    div.innerHTML = `
+      <strong>Hand #${index + 1}</strong><br>
+      <small>${new Date(hand.timestamp).toLocaleString()}</small><br>
+      <strong>Hero:</strong> ${hand.heroCards.join(', ')}<br>
+      <strong>Board:</strong> ${hand.communityCards.join(', ')}<br>
+      <strong>Pot:</strong> $${hand.pot}<br>
+      <strong>Result:</strong> ${hand.isCorrect ? '<span class="text-success">✅ Correct</span>' : '<span class="text-danger">❌ Incorrect</span>'}<br>
+      <strong>Actions:</strong> ${hand.actions.map(a => `${a.action}${a.amount ? ' $' + a.amount : ''}`).join(' → ')}
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+
+
+      showRaiseControls() {
+        const raiseControls = document.getElementById('raise-controls');
+        const actionButtons = document.getElementById('action-buttons');
+        
+        if (raiseControls) raiseControls.style.display = 'block';
+        if (actionButtons) actionButtons.style.display = 'none';
+        
+        const minRaise = this.gameState.toCall * 2;
+        const maxRaise = this.gameState.heroStack;
+        const slider = document.getElementById('raise-slider');
+        const raiseDisplay = document.getElementById('raise-display');
+        
+        if (slider) {
+          slider.min = minRaise;
+          slider.max = maxRaise;
+          slider.value = Math.min(minRaise * 2, maxRaise);
+          
+          if (raiseDisplay) {
+            raiseDisplay.textContent = slider.value;
+          }
+        }
+      }
+
+      hideRaiseControls() {
+        const raiseControls = document.getElementById('raise-controls');
+        const actionButtons = document.getElementById('action-buttons');
+        
+        if (raiseControls) raiseControls.style.display = 'none';
+        if (actionButtons) actionButtons.style.display = 'block';
+      }
+
+      confirmRaise() {
+        const slider = document.getElementById('raise-slider');
+        const amount = slider ? parseInt(slider.value) : 20;
+        this.hideRaiseControls();
+        this.makeAction('raise', amount);
+      }
+
+      resetStats() {
+        localStorage.removeItem('pokerStats');
+        localStorage.removeItem('pokerHandHistory');
+        this.gameState.stats = {};
+        this.gameState.handHistory = [];
+        this.initializeStats();
+        this.updateDisplays();
+        this.updateHandHistoryDisplay();
+
+      }
+
+      capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      new PokerGTOTrainer();
+    });
+  </script>
+</body>
+</html>
