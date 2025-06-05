@@ -677,6 +677,7 @@
       getGTORecommendation() {
         const heroHand = this.normalizeHand(this.gameState.heroCards);
 
+
         const response = typeof preflopResponses !== 'undefined'
           ? preflopResponses[heroHand]
           : undefined;
@@ -690,6 +691,9 @@
           const primary = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
           return { primary, frequency: freq, reasoning: 'Based on preflop chart' };
         }
+
+        const action = preflopResponses[heroHand];
+
 
         const handStrength = this.evaluateHandStrength(
           this.gameState.heroCards,
