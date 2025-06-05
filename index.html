@@ -389,6 +389,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script src="src/preflopResponses.js"></script>
   <script>
     // Poker Game State Management
     class PokerGTOTrainer {
@@ -674,69 +675,6 @@
 
       getGTORecommendation() {
         const heroHand = this.normalizeHand(this.gameState.heroCards);
-
-        const preflopResponses = {
-          // Pocket Pairs
-          "AA": { raise: 100, call: 0, fold: 0 },
-          "KK": { raise: 100, call: 0, fold: 0 },
-          "QQ": { raise: 100, call: 0, fold: 0 },
-          "JJ": { raise: 90, call: 10, fold: 0 },
-          "TT": { raise: 85, call: 15, fold: 0 },
-          "99": { raise: 70, call: 30, fold: 0 },
-          "88": { raise: 60, call: 40, fold: 0 },
-          "77": { raise: 50, call: 50, fold: 0 },
-          "66": { raise: 40, call: 60, fold: 0 },
-          "55": { raise: 30, call: 60, fold: 10 },
-          "44": { raise: 25, call: 60, fold: 15 },
-          "33": { raise: 20, call: 55, fold: 25 },
-          "22": { raise: 15, call: 50, fold: 35 },
-
-          // Suited Broadways
-          "AKs": { raise: 100, call: 0, fold: 0 },
-          "AQs": { raise: 90, call: 10, fold: 0 },
-          "AJs": { raise: 85, call: 15, fold: 0 },
-          "ATs": { raise: 80, call: 20, fold: 0 },
-          "KQs": { raise: 75, call: 25, fold: 0 },
-          "KJs": { raise: 70, call: 30, fold: 0 },
-          "QJs": { raise: 60, call: 35, fold: 5 },
-          "JTs": { raise: 55, call: 40, fold: 5 },
-
-          // Offsuit Broadways
-          "AKo": { raise: 100, call: 0, fold: 0 },
-          "AQo": { raise: 70, call: 20, fold: 10 },
-          "AJo": { raise: 60, call: 25, fold: 15 },
-          "KQo": { raise: 50, call: 25, fold: 25 },
-
-          // Suited Aces (including weaker ones)
-          "A9s": { raise: 65, call: 25, fold: 10 },
-          "A8s": { raise: 60, call: 25, fold: 15 },
-          "A7s": { raise: 55, call: 25, fold: 20 },
-          "A6s": { raise: 50, call: 25, fold: 25 },
-          "A5s": { raise: 70, call: 20, fold: 10 }, // Wheel potential
-          "A4s": { raise: 65, call: 25, fold: 10 },
-          "A3s": { raise: 60, call: 25, fold: 15 },
-          "A2s": { raise: 60, call: 25, fold: 15 },
-
-          // Strong Suited Connectors
-          "KTs": { raise: 50, call: 35, fold: 15 },
-          "QTs": { raise: 45, call: 35, fold: 20 },
-          "J9s": { raise: 40, call: 40, fold: 20 },
-          "T9s": { raise: 40, call: 40, fold: 20 },
-          "98s": { raise: 35, call: 45, fold: 20 },
-          "87s": { raise: 30, call: 50, fold: 20 },
-          "76s": { raise: 25, call: 55, fold: 20 },
-          "65s": { raise: 20, call: 50, fold: 30 },
-          "54s": { raise: 15, call: 45, fold: 40 },
-
-          // Other Notable Hands
-          "K9s": { raise: 25, call: 45, fold: 30 },
-          "Q9s": { raise: 20, call: 40, fold: 40 },
-          "J8s": { raise: 15, call: 45, fold: 40 },
-          "T8s": { raise: 10, call: 40, fold: 50 }
-        };
-
-
-
 
         const action = preflopResponses[heroHand];
 
