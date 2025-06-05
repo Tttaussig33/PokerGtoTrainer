@@ -673,67 +673,41 @@
       }
 
 
+      
       getGTORecommendation() {
         const heroHand = this.normalizeHand(this.gameState.heroCards);
 
+
+        const response = typeof preflopResponses !== 'undefined'
+          ? preflopResponses[heroHand]
+          : undefined;
+
+        if (response) {
+          const freq = {
+            fold: response.fold ?? 0,
+            call: response.call ?? 0,
+            raise: response.raise ?? 0,
+          };
+          const primary = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
+          return { primary, frequency: freq, reasoning: 'Based on preflop chart' };
+        }
+
         const action = preflopResponses[heroHand];
 
-          // Fallback strategy if the hand isn't explicitly in the lookup table
-          if (!action) {
-            const handStrength = this.evaluateHandStrength(this.gameState.heroCards, this.gameState.communityCards.slice(0, this.getVisibleCommunityCards()));
 
-            if (handStrength >= 5) {
-              return { primary: 'raise', frequency: { fold: 5, call: 25, raise: 70 }, reasoning: 'Strong hand, bet for value' };
-            } else if (handStrength >= 3) {
-              return { primary: 'call', frequency: { fold: 30, call: 50, raise: 20 }, reasoning: 'Decent hand, call to see more cards' };
-            } else {
-              return { primary: 'fold', frequency: { fold: 70, call: 20, raise: 10 }, reasoning: 'Weak hand, fold to pressure' };
-            }
-          }
+        const handStrength = this.evaluateHandStrength(
+          this.gameState.heroCards,
+          this.gameState.communityCards.slice(0, this.getVisibleCommunityCards()),
+        );
 
-          if (action === 'raise') {
-            return {
-              primary: 'raise',
-              frequency: { fold: 0, call: 10, raise: 90 },
-              reasoning: 'Strong hand, raise for value'
-            };
-          } else if (action === 'call') {
-            return {
-              primary: 'call',
-              frequency: { fold: 20, call: 60, raise: 20 },
-              reasoning: 'Playable hand, call to see the flop'
-            };
-          } else {
-            return {
-              primary: 'fold',
-              frequency: { fold: 80, call: 15, raise: 5 },
-              reasoning: 'Weak hand, fold preflop'
-            };
-          }
-
+        if (handStrength >= 5) {
+          return { primary: 'raise', frequency: { fold: 5, call: 25, raise: 70 }, reasoning: 'Strong hand, bet for value' };
+        } else if (handStrength >= 3) {
+          return { primary: 'call', frequency: { fold: 30, call: 50, raise: 20 }, reasoning: 'Decent hand, call to see more cards' };
+        } else {
+          return { primary: 'fold', frequency: { fold: 70, call: 20, raise: 10 }, reasoning: 'Weak hand, fold to pressure' };
+        }
       }
-
-
-getPreflopHandKey(cards) {
-  const [c1, c2] = cards;
-  const r1 = c1[0];
-  const r2 = c2[0];
-  const s1 = c1.slice(1);
-  const s2 = c2.slice(1);
-
-  const suited = s1 === s2;
-  let key;
-
-  if (r1 === r2) {
-    key = r1 + r2; // e.g. 'QQ'
-  } else {
-    const [high, low] = [r1, r2].sort((a, b) => '23456789TJQKA'.indexOf(b) - '23456789TJQKA'.indexOf(a));
-    key = high + low + (suited ? 's' : 'o');
-  }
-
-  return key;
-}
-
 
 
       isActionCorrect(action, amount, gtoRecommendation) {
